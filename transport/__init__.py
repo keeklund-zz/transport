@@ -137,10 +137,6 @@ def modify(transfer_id):
     if transfer.status != 'In Transit':
         flash("Cannot modify transaction: %d" % transfer_id)
         return redirect("/")
-
-    # Get current list of manifest
-    # Get list of available samples
-    # make appropriate alterations to tables
     transfer_items = TransferItems.query.filter_by(transfer_id=transfer_id).all()
     req = get('http://myflaskapp-keklund.apps.unc.edu/pickup/GSB')    
     return render_template("modify.html", transfer_items=transfer_items, data=req.json(), transfer_id=transfer_id)
@@ -155,8 +151,6 @@ def confirm_modification():
     original_item_ids = set([i.tracseq_id for i in original_transfer_items])
     new_item_ids = set(map(int, data.keys()))
     # what if either of these are length 0?
-    print 'orig: ', original_item_ids
-    print 'new: ', new_item_ids
 
     # removal
     for removal_id in original_item_ids.difference(new_item_ids):
@@ -166,12 +160,17 @@ def confirm_modification():
           first()
         db.session.delete(removal_item)
         db.session.commit()
-            
+        
+    # additional
+    for additional_id in new_item_ids.difference(original_item_ids):
+        additional_item = TransferItems(transfer_id, additional_id)
+        db.session.add(additional_item)
+        db.session.commit()
     # can have a key that is already in original_transfer_items - do nothing
     # can have a key that isn't in original_transfer_items - add to transfer
     # can have a key that is in original_transfer_items but not data - remove from transfer
 
-    flash("Transaction updated successfully!")
+    flash("Transaction: %d updated successfully!" % int(transfer_id))
     return redirect("/")
 
 @app.route("/cancel/<int:transfer_id>", methods=['POST'])
@@ -184,5 +183,7 @@ def cancel_transfer(transfer_id):
     transfer.status = "Cancelled"
     transfer.date_stop = datetime.now()
     db.session.commit()
-    flash("Transaction cancelled successfully!")
+    flash("Transaction: %d cancelled successfully!" % int(transfer.id))
     return redirect("/")
+
+# use config parser to import "global" variables
