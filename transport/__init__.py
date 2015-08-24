@@ -85,7 +85,7 @@ def index():
 
 @app.route("/pickup/<location>", methods=['GET',])
 def pickup(location):
-    req = get('http://localhost:5001/pickup/%s' % location)
+    req = get('http://myflaskapp-keklund.apps.unc.edu/pickup/%s' % location)
     return render_template("pickup.html", location=location, data=req.json())
 
 @app.route("/checkout", methods=['POST'])
@@ -140,7 +140,7 @@ def modify(transfer_id):
     # Get list of available samples
     # make appropriate alterations to tables
     transfer_items = TransferItems.query.filter_by(transfer_id=transfer_id).all()
-    req = get('http://localhost:5001/pickup/GSB')    
+    req = get('http://myflaskapp-keklund.apps.unc.edu/pickup/GSB')    
     return render_template("modify.html", transfer_items=transfer_items, data=req.json(), transfer_id=transfer_id)
 
 @app.route("/modconfirm", methods=['POST'])
