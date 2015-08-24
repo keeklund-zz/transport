@@ -98,8 +98,10 @@ def checkout():
     db.session.commit()
 
     transfer_items = [TransferItems(transfer.id, v) for k,v in form_data.items()]
-    db.session.bulk_save_objects(transfer_items)
-    db.session.commit()
+    # db.session.bulk_save_objects(transfer_items)
+    for transfer_item in transfer_items:
+        db.session.add(transfer_item)
+        db.session.commit()
 
     flash("%d samples checked out!" % len(form_data))
     return redirect("/")
