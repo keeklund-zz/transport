@@ -1,0 +1,41 @@
+{% extends "base_layout.html" %}
+{% block body %}
+<h2>Material Selection from {{ location }}:</h2>
+<form method="post" name="available_material" action="/checkout">
+  <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showMaterial" aria-expanded="false" aria-controls="collapseExample">
+    Show {{ data.get('data') | length }} Containers
+  </button>
+  <div class="collapse" id="showMaterial">
+    <div class="well">
+      <div class="btn-group" data-toggle="buttons">
+	{% for datum in data.get('data') %}
+	<label class="btn btn-default active">
+	  <input name="{{ datum.pool }}" value="{{ datum.id }}" type="checkbox" autocomplete="off" checked />{{ datum.pool }}
+	</label>
+	{% endfor %}
+      </div>
+    </div>
+  </div>
+  <input type="hidden" name="location" value="{{ location }}" />
+
+  <div class="page-header">
+    <h3>Submission</h3>
+  </div>
+  <p>
+    <input type="submit" class="btn btn-default" value="Checkout Material" />
+  </p>
+</form>
+
+
+<!-- <li class="list-group-item group-btn"> -->
+<!--         <span class="input-group-btn"> -->
+<!--             <button class="btn btn-default" type="button">Go!</button> -->
+<!--         </span> -->
+<!--   </li> -->
+<!-- <li class="list-group-item group-btn" style="padding:0px;"> -->
+<!--         <span class="input-group-btn"> -->
+<!--             <button class="btn btn-default" type="button">Go!</button> -->
+<!--         </span> -->
+<!--   </li> -->
+
+{% endblock %}

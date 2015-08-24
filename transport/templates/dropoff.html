@@ -1,0 +1,21 @@
+{% extends "base_layout.html" %}
+{% block body %}
+<div class="page-header">
+  <h2>Drop off Material at {{ location }}:</h2>
+</div>
+
+<form method="post" name="available_material" action="/confirm">
+  <div class="btn-group" data-toggle="buttons">
+    <label class="btn btn-default active">
+      <input type="checkbox" name="transfer_id" value="{{ data.id }}" autocomplete="off" checked />Transaction #: {{ data.id }}
+    </label>
+  </div>
+
+  <div class="page-header">
+    <h3>Submission</h3>
+  </div>
+  <p>
+    <input type="submit" class="btn btn-default" value="Drop Off Material">
+  </p>
+</form>
+{% endblock %}

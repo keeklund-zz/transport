@@ -1,0 +1,4 @@
+body  { display: block; }
+.hide:focus ~ .alert  { display: none; }
+.show:focus ~ .alert  { display: block; }
+

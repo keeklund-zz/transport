@@ -1,0 +1,38 @@
+{% extends "base_layout.html" %}
+{% block body %}
+{% for message in get_flashed_messages() %}
+<div class="alert alert-success" role="alert">
+  {{ message }}
+</div>
+{% endfor %}
+
+{% if current_transfer %}
+<div class="page-header">
+  <h3>MODIFY</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-warning" href="/modify/{{ current_transfer[0].id }}" role="button">{{ current_transfer.date_start }}</a>
+</p>
+{% else %}
+<div class="page-header">
+  <h3>Pick Up</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-default" href="/pickup/GSB" role="button">GSB</a>
+</p>
+{% endif %} 
+
+<div class="page-header">
+  <h3>Drop Off</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-default" href="/dropoff/CCC" role="button">CCC</a>
+</p>
+
+<!-- <h2>Pick up</h2> -->
+<!-- <p><a href="/pickup/CCC">Pick up samples from CCC</a></p> -->
+<!-- <p><a href="/pickup/GSB">Pick up samples from GSB</a></p> -->
+<!-- <h2>Drop off</h2> -->
+<!-- <p><a href="/dropoff/CCC">Drop off samples at CCC</a></p> -->
+<!-- <p><a href="/dropoff/GSB">Drop off  samples at GSB</a></p> -->
+{% endblock %}

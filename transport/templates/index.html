@@ -1,0 +1,31 @@
+{% extends "base_layout.html" %}
+{% block body %}
+{% for message in get_flashed_messages() %}
+<div class="alert alert-success" role="alert">
+  {{ message }}
+</div>
+{% endfor %}
+
+{% if current_transfer %}
+<div class="page-header">
+  <h3>MODIFY</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-warning" href="/modify/{{ current_transfer.id }}" role="button">Transaction: {{ current_transfer.id }} @ {{ current_transfer.date_start }}</a>
+</p>
+{% else %}
+<div class="page-header">
+  <h3>Pick Up</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-default" href="/pickup/GSB" role="button">GSB</a>
+</p>
+{% endif %} 
+
+<div class="page-header">
+  <h3>Drop Off</h3>
+</div>
+<p>
+  <a class="btn btn-lg btn-default" href="/dropoff/CCC" role="button">CCC</a>
+</p>
+{% endblock %}
