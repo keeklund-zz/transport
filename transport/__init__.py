@@ -8,7 +8,7 @@ from requests import get, post
 
 # configurations
 basedir = abspath(dirname(__file__))
-SQLALCHEMY_DATABASE_URI = ''.join(['sqlite:///', join(basedir, 'transport.db')])
+SQLALCHEMY_DATABASE_URI = ''.join(['sqlite:///', join(basedir, '../../data/transport.db')])
 
 app = Flask(__name__)
 app.secret_key = "weliveinasocietypeople"
