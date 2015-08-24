@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 
 bcrypt = Bcrypt(app)
 
-logging.basicConfig(filename='example.log', level=logging.DEBUG)
+logging.basicConfig(filename=join(basedir,'../../logs/example.log'), level=logging.DEBUG)
 
 # DATABASE
 class Users(db.Model):
