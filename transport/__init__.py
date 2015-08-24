@@ -1,6 +1,5 @@
 from datetime import datetime
 from itertools import permutations
-import logging
 from os.path import abspath, dirname, join
 from flask import flash, Flask, jsonify, redirect, render_template, request, url_for
 from flask.ext.bcrypt import Bcrypt
@@ -18,8 +17,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 db = SQLAlchemy(app)
 
 bcrypt = Bcrypt(app)
-
-logging.basicConfig(filename=join(basedir,'../../data/example.log'), level=logging.DEBUG)
 
 # DATABASE
 class Users(db.Model):
@@ -96,18 +93,14 @@ def checkout():
     form_data = request.form.to_dict()
     location = form_data.pop('location', None)
 
-    logging.debug(form_data)
-    logging.debug(location)
     transfer = Transfers(location)
-    logging.debug('transfer: ', transfer)
     db.session.add(transfer)
     db.session.commit()
-    logging.debug('here')
+
     transfer_items = [TransferItems(transfer.id, v) for k,v in form_data.items()]
-    logging.debug('transfer_items: ', transfer_items)
     db.session.bulk_save_objects(transfer_items)
     db.session.commit()
-    logging.debug('and here')
+
     flash("%d samples checked out!" % len(form_data))
     return redirect("/")
 
