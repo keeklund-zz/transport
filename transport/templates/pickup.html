@@ -2,7 +2,7 @@
 {% block body %}
 <h2>Material Selection from {{ location }}:</h2>
 <form method="post" name="available_material" action="/checkout">
-  <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showMaterial" aria-expanded="false" aria-controls="collapseExample">
+  <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showMaterial" aria-expanded="false">
     Show {{ data.get('data') | length }} Containers
   </button>
   <div class="collapse" id="showMaterial">

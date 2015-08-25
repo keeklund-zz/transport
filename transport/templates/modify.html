@@ -10,13 +10,21 @@
   <div class="page-header">
     <h2>Modify Current Manifest</h2>
   </div>
+
+  <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#currentMaterial" aria-expanded="false">
+    Show Current Material: {{ transfer_items | length }}
+  </button>
   
-  <div class="btn-group-vertical" data-toggle="buttons">
-    {% for transfer_item in transfer_items %}
-    <label class="btn btn-default active">
-      <input name="{{ transfer_item.tracseq_id }}" value="{{ transfer_item.id }}" type="checkbox" autocomplete="off" checked />{{ transfer_item.tracseq_id }}
-    </label>
-    {% endfor %}
+  <div class="collapse" id="currentMaterial">
+    <div class="well">
+      <div class="btn-group-vertical" data-toggle="buttons">
+	{% for transfer_item in transfer_items %}
+	<label class="btn btn-default active">
+	  <input name="{{ transfer_item.tracseq_id }}" value="{{ transfer_item.id }}" type="checkbox" autocomplete="off" checked />{{ transfer_item.tracseq_id }}
+	</label>
+	{% endfor %}
+      </div>
+    </div>
   </div>
   
   
@@ -24,12 +32,21 @@
     <h3>Add Material to Trip</h3>
   </div>
   {% if data.get('data') %}
-  <div class="btn-group-vertical" data-toggle="buttons">
-    {% for datum in data.get('data') %}
-    <label class="btn btn-default">
-      <input name="1{{ datum.id }}" value="{{ datum.pool }}" type="checkbox" autocomplete="off" />{{ datum.pool }}
-    </label>
-    {% endfor %}
+  <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#availableMaterial" aria-expanded="false">
+    Show Available Material: {{ transfer_items | length }}
+  </button>
+
+
+  <div class="collapse" id="availableMaterial">
+    <div class="well">
+      <div class="btn-group-vertical" data-toggle="buttons">
+	{% for datum in data.get('data') %}
+	<label class="btn btn-default">
+	  <input name="1{{ datum.id }}" value="{{ datum.pool }}" type="checkbox" autocomplete="off" />{{ datum.pool }}
+	</label>
+	{% endfor %}
+      </div>
+    </div>
   </div>
   {% else %}
   <p>No additional material available!</p>
