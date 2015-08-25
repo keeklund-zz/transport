@@ -1,3 +1,5 @@
 *~
 *.pyc
+db_rebuild.py
+run.py
 virtenv/
