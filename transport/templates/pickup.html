@@ -7,7 +7,7 @@
   </button>
   <div class="collapse" id="showMaterial">
     <div class="well">
-      <div class="btn-group" data-toggle="buttons">
+      <div class="btn-group-vertical" data-toggle="buttons">
 	{% for datum in data.get('data') %}
 	<label class="btn btn-default active">
 	  <input name="{{ datum.pool }}" value="{{ datum.id }}" type="checkbox" autocomplete="off" checked />{{ datum.pool }}

@@ -11,7 +11,7 @@
     <h2>Modify Current Manifest</h2>
   </div>
   
-  <div class="btn-group" data-toggle="buttons">
+  <div class="btn-group-vertical" data-toggle="buttons">
     {% for transfer_item in transfer_items %}
     <label class="btn btn-default active">
       <input name="{{ transfer_item.tracseq_id }}" value="{{ transfer_item.id }}" type="checkbox" autocomplete="off" checked />{{ transfer_item.tracseq_id }}
@@ -24,7 +24,7 @@
     <h3>Add Material to Trip</h3>
   </div>
   {% if data.get('data') %}
-  <div class="btn-group" data-toggle="buttons">
+  <div class="btn-group-vertical" data-toggle="buttons">
     {% for datum in data.get('data') %}
     <label class="btn btn-default">
       <input name="1{{ datum.id }}" value="{{ datum.pool }}" type="checkbox" autocomplete="off" />{{ datum.pool }}
@@ -41,13 +41,15 @@
   <p>
     <input type="hidden" name="transfer_id" value="{{ transfer_id }}" />
     <input type="submit" class="btn btn-default" value="Update Manifest" />
+    <a href="/" class="btn btn-warning">Cancel Modification</a>
   </p>
 </form>
 
-<a href="/" class="btn btn-default">Cancel Modification</a>
-
+<div class="page-header">
+  <h3>Danger</h3>
+</div>
 <form method="post" name="cancel_transfer" action="/cancel/{{ transfer_id }}">
-  <input type="submit" class="btn btn-default" value="Cancel Transfer" />
+  <input type="submit" class="btn btn-danger" value="Cancel Transfer" />
 </form>
 
 {% endblock %}
