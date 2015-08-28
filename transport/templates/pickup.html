@@ -1,23 +1,27 @@
 {% extends "base_layout.html" %}
 {% block body %}
-<h2>Material Selection from {{ location }}:</h2>
-<form method="post" name="available_material" action="/checkout">
+<div class="page-header">
+  <h2>Material Selection:</h2>
+</div>
+<form method="post" name="available_material" action="{{ url_for('checkout') }}">
   <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#showMaterial" aria-expanded="false">
-    Show {{ data.get('data') | length }} Containers
+    Show {{ data | length }} Containers
   </button>
   <div class="collapse" id="showMaterial">
     <div class="well">
       <div class="btn-group-vertical" data-toggle="buttons">
-	{% for datum in data.get('data') %}
+	{% for datum in data %}
 	<label class="btn btn-default active">
-	  <input name="{{ datum.pool }}" value="{{ datum.id }}" type="checkbox" autocomplete="off" checked />{{ datum.pool }}
+	  <input name="{{ datum.poolName }}" value="{{ datum.poolDataId }}" type="checkbox" autocomplete="off" checked />{{ datum.poolName }}
 	</label>
 	{% endfor %}
       </div>
     </div>
   </div>
-  <input type="hidden" name="location" value="{{ location }}" />
-
+  <div class="page-header">
+    <h3>Notes</h3>
+  </div>
+  <input type="text-area" name="notes" class="form-control" placeholder="Notes on this transfer." />
   <div class="page-header">
     <h3>Submission</h3>
   </div>

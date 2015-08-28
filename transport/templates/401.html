@@ -1,0 +1,11 @@
+{% extends "base_layout.html" %}
+{% block body %}
+<div class="page-header">
+<h2>Oops!</h2>
+</div>
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning" role="alert">
+  {{ message }}
+</div>
+{% endfor %}
+{% endblock %}

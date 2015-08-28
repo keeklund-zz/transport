@@ -1,22 +1,24 @@
 from datetime import datetime
 from itertools import permutations
 from os.path import abspath, dirname, join
-from flask import flash, Flask, jsonify, redirect, render_template, request, url_for
-from flask.ext.bcrypt import Bcrypt
+from flask import abort, flash, Flask, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.wtf import Form
+from wtforms import TextField, validators
 from requests import get, post
 
 # configurations
 basedir = abspath(dirname(__file__))
 SQLALCHEMY_DATABASE_URI = ''.join(['sqlite:///', join(basedir, '../../data/transport.db')])
 
+TRACSEQ_API_BASE = 'https://mps-mssql.its.unc.edu/DevTracSeq/Internal/Transfers'
+
 app = Flask(__name__)
+# do I need a secret key when we have sessions?
 app.secret_key = "weliveinasocietypeople"
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 
 db = SQLAlchemy(app)
-
-bcrypt = Bcrypt(app)
 
 # DATABASE
 class Users(db.Model):
@@ -25,152 +27,188 @@ class Users(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True)
+    onyen = db.Column(db.String(10), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    # separate table with device list
+    device_id = db.Column(db.String(120), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime)
 
-    def __init__(self, name, email, password):
+    def __init__(self, name, onyen, email, device_id):
         self.name = name
+        self.onyen = onyen
         self.email = email
-        self.password = bcrypt.generate_password_hash(password)
+        self.device_id = device_id
         self.timestamp = datetime.now()
     
     
-# need to include the user
-class Transfers(db.Model):
-    """Class containing meta data for transfers.
+# FORMS
+class UserForm(Form):
+    name = TextField('name', [validators.Length(max=120)])
+    onyen = TextField('onyen', [validators.Length(max=10)])
+    email = TextField('email', [validators.Email(), validators.Length(max=120)])
+    
 
-    Contains information about the user, location, batch number.
+class LogInForm(Form):
+    name = TextField('name')
+    password = TextField('password')
 
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String(16), nullable=False)
-    start_loc = db.Column(db.String(4), nullable=False)
-    stop_loc = db.Column(db.String(4), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship('Users', backref=db.backref('transit', lazy='dynamic'))
-    date_start = db.Column(db.DateTime)
-    date_stop = db.Column(db.DateTime)    
-
-    def __init__(self, start_loc):
-        location_mapper = dict([i for i in permutations((unicode('GSB'), unicode('CCC')))])
-        self.status = 'In Transit'
-        self.start_loc = start_loc
-        self.stop_loc = location_mapper.get(start_loc.upper())
-        self.date_start = datetime.now() 
-        self.user_id = 1
-
-
-class TransferItems(db.Model):
-    """Class outlining specific material with reference to Transit.
-
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    tracseq_id = db.Column(db.Integer)
-    transfer_id = db.Column(db.Integer, db.ForeignKey('transfers.id'))
-    transfer = db.relationship('Transfers', backref=db.backref('transfers', lazy='dynamic'))
-#    timestamp = db.Column(db.DateTime)
-
-    def __init__(self, transfer_id, tracseq_id):
-        self.transfer_id = transfer_id
-        self.tracseq_id = tracseq_id
-#        self.timestamp = datetime.now()
-
-
+    
 # VIEWS
+@app.errorhandler(401)
+def unauthorized(error):
+    # is this right?
+    return render_template('401.html', form=UserForm()), 401 #, {'WWW-Authenticate': 'Basic realm="Login Required"'}
+
+# do we need a 403 - forbidden?
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def unauthorized(error):
+    # is this right?
+    return render_template('500.html'), 500 #, {'WWW-Authenticate': 'Basic realm="Login Required"'}
+
+@app.before_request
+def get_user():
+    # need more logic for add_device (can only be logged in as admin)
+    if not request.endpoint in ('add_device', 'login'):
+        onyen = request.cookies.get('onyen')
+        device_id = request.cookies.get('device_id')
+        if onyen and device_id:
+    #        user = Users.query.filter_by(onyen=onyen).filter_by(device_id=device_id).first()
+# log in user
+            pass
+        # elif admin:
+        #     pass
+        else:
+            flash("This user's device isn't registered!")
+            flash("Please contact an admin to register your device!")
+            abort(401)
+    
 @app.route("/")
 def index():
-    current_transfer = Transfers.query.filter_by(status="In Transit").first()
-    return render_template('index.html',  current_transfer=current_transfer)
+    # look at tracseq first by onyen to see what is waiting
+    onyen = request.cookies.get('onyen')
+    # error checking around get
+    req = get('%s/%s' % (TRACSEQ_API_BASE, onyen))
+    current_transfers = [i for i in req.json() if i.get('status') == 'InTransit']
+    return render_template('index.html',  current_transfers=current_transfers)
 
-@app.route("/pickup/<location>", methods=['GET',])
-def pickup(location):
-    req = get('http://myflaskapp-keklund.apps.unc.edu/pickup/%s' % location)
-    return render_template("pickup.html", location=location, data=req.json())
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LogInForm()
+    if form.validate_on_submit():
+        return redirect(url_for('add_device'))
+    return render_template("login.html", form=form)
 
+# can only get here if logged in
+@app.route("/add_device", methods=['GET', 'POST'])
+def add_device():
+    form = UserForm()
+    if form.validate_on_submit():
+        response = make_response(redirect(url_for('index')))
+        response.set_cookie('onyen', form.onyen.data)
+        response.set_cookie('device_id', 'test_cookie')
+        return response
+    return render_template("add_device.html", form=form)
+
+@app.route("/pickup", methods=['GET',])
+def pickup():
+    # do some error catching
+    req = get('%s/%s' % (TRACSEQ_API_BASE, 'Available'))
+    return render_template("pickup.html", data=req.json())
+
+# may want to combin GET and POST 
 @app.route("/checkout", methods=['POST'])
 def checkout():
     form_data = request.form.to_dict()
-    location = form_data.pop('location', None)
+    notes = form_data.pop('notes', None)
 
-    transfer = Transfers(location)
-    db.session.add(transfer)
-    db.session.commit()
-
-    transfer_items = [TransferItems(transfer.id, v) for k,v in form_data.items()]
-    # db.session.bulk_save_objects(transfer_items)
-    for transfer_item in transfer_items:
-        db.session.add(transfer_item)
-        db.session.commit()
-
+    payload = {
+        'carrier': request.cookies.get('onyen', None),
+        'items': map(int, form_data.values()),
+        'notes': notes,
+        'status': 'InTransit',
+        }
+       
+    # post to tracseq, need error checking
+    # this may not be working
+    req = post(TRACSEQ_API_BASE, json=payload)
     flash("%d samples checked out!" % len(form_data))
     return redirect("/")
 
-@app.route("/dropoff/<location>", methods=['GET',])
-def dropoff(location):
-    current_transfer = Transfers.query.\
-      filter_by(user_id=1).\
-      filter_by(status='In Transit').\
-      first()
-    if not current_transfer:
+@app.route("/dropoff", methods=['GET',])
+def dropoff():
+    onyen = request.cookies.get('onyen', None)
+    req = get('%s?carrier=%s&status=InTransit' % (TRACSEQ_API_BASE, onyen))
+    if req.ok:
+        data = req.json()
+    else:
+        flash("Sorry about this, but there was an error!")
+        flash("Please try again, or contact a developer.")
+        abort(500)
+
+    if len(data) == 0:
         flash("Please checkout data first!")
         return redirect("/")
-    return render_template("dropoff.html",
-                           location=location,
-                           data=current_transfer)
+    
+    print data
+    return render_template("dropoff.html", data=data)
+                           
 
 @app.route("/confirm", methods=['POST'])
 def confirm():
-    now = datetime.now()
-    if request.form:
-        transfer = Transfers.query.get(request.form.get('transfer_id'))
-        transfer.date_stop = datetime.now()
-        transfer.status = 'Arrived'
-        db.session.add(transfer)
-        db.session.commit()
+    req = post('%s/%s/status/arrived' % (TRACSEQ_API_BASE, request.form.get('transfer_id', None)))
+    if req.ok:
         flash("Transfer: %d's Material has been dropped off!" % int(request.form.get('transfer_id')))
+    else:
+        flash("Sorry about this, but there was an error!")
+        flash("Please try again, or contact a developer.")
     return redirect("/")
 
 @app.route("/modify/<int:transfer_id>")
 def modify(transfer_id):
-    transfer = Transfers.query.get(transfer_id)
-    if transfer.status != 'In Transit':
+
+    req = get("%s/%d" % (TRACSEQ_API_BASE, transfer_id))
+    transfers = req.json()
+    transfer = transfers[0] if transfers else None
+
+    if transfer.get('status') != 'InTransit':
         flash("Cannot modify transaction: %d" % transfer_id)
         return redirect("/")
-    transfer_items = TransferItems.query.filter_by(transfer_id=transfer_id).all()
-    req = get('http://myflaskapp-keklund.apps.unc.edu/pickup/GSB')    
-    return render_template("modify.html", transfer_items=transfer_items, data=req.json(), transfer_id=transfer_id)
+
+    # items not being marked as checked out
+    # need to talk to rob
+    # also error checking
+    req = get('%s/%s' % (TRACSEQ_API_BASE, 'Available'))
+    available = req.json()
+    return render_template("modify.html",
+                           transfer_items=transfer.get('items'),
+                           newly_available=available,
+                           transfer_id=transfer_id)
 
 @app.route("/modconfirm", methods=['POST'])
 def confirm_modification():
     # get data and do stuff
     data = request.form.to_dict()
     transfer_id = data.pop('transfer_id', None)
-    original_transfer_items = TransferItems.query.filter_by(transfer_id=transfer_id).all()
 
-    original_item_ids = set([i.tracseq_id for i in original_transfer_items])
-    new_item_ids = set(map(int, data.keys()))
-    # what if either of these are length 0?
+    # just get the data that we want to use and post
+    # error checking 
+    req = get('%s/%s' % (TRACSEQ_API_BASE, transfer_id))
+    transfer = req.json()[0]
 
-    # removal
-    for removal_id in original_item_ids.difference(new_item_ids):
-        removal_item = TransferItems.query.\
-          filter_by(tracseq_id=removal_id).\
-          filter_by(transfer_id=transfer_id).\
-          first()
-        db.session.delete(removal_item)
-        db.session.commit()
-        
-    # additional
-    for additional_id in new_item_ids.difference(original_item_ids):
-        additional_item = TransferItems(transfer_id, additional_id)
-        db.session.add(additional_item)
-        db.session.commit()
-    # can have a key that is already in original_transfer_items - do nothing
-    # can have a key that isn't in original_transfer_items - add to transfer
-    # can have a key that is in original_transfer_items but not data - remove from transfer
+    transfer['items'] = map(int, data.values())
 
-    flash("Transaction: %d updated successfully!" % int(transfer_id))
+    # error checking
+    req = post('%s/%s' % (TRACSEQ_API_BASE, transfer_id), json=transfer)
+
+    if req.ok:
+        flash("Transaction: %d updated successfully!" % int(transfer_id))
+    else:
+        flash("Sorry, that didn't work.")
     return redirect("/")
 
 @app.route("/cancel/<int:transfer_id>", methods=['POST'])
@@ -179,11 +217,27 @@ def cancel_transfer(transfer_id):
     #
     # could simply: confirm it was the user who checked it out, and flash message
     # will need to put back to tracseq to release these samples again
-    transfer = Transfers.query.get(transfer_id)
-    transfer.status = "Cancelled"
-    transfer.date_stop = datetime.now()
-    db.session.commit()
-    flash("Transaction: %d cancelled successfully!" % int(transfer.id))
+    # transfer = Transfers.query.get(transfer_id)
+    # transfer.status = "Cancelled"
+    # transfer.date_stop = datetime.now()
+    # db.session.commit()
+
+
+    req = get("%s/%s" % (TRACSEQ_API_BASE, transfer_id))
+    transfer = req.json()[0]
+    transfer['status'] = 'Cancelled'
+    transfer['items'] = []
+
+    # req = post('%s/%d/status/cancelled' % (TRACSEQ_API_BASE, transfer_id))
+
+    req = post("%s/%d" % (TRACSEQ_API_BASE, transfer_id), json=transfer)
+    if req.ok:
+        flash("Transaction: %d cancelled successfully!" % transfer_id)
+    else:
+        flash("Sorry, that didn't work.")
     return redirect("/")
 
 # use config parser to import "global" variables
+# need logging
+# catch all errors and then determine 401, 404, or 500? special error function?
+# handle all req as lists not just the first one

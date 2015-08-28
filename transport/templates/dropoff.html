@@ -1,14 +1,16 @@
 {% extends "base_layout.html" %}
 {% block body %}
 <div class="page-header">
-  <h2>Drop off Material at {{ location }}:</h2>
+  <h2>Drop off Material:</h2>
 </div>
 
-<form method="post" name="available_material" action="/confirm">
+<form method="post" name="available_material" action="{{ url_for('confirm') }}">
   <div class="btn-group-vertical" data-toggle="buttons">
+    {% for transfer in data %}
     <label class="btn btn-default active">
-      <input type="checkbox" name="transfer_id" value="{{ data.id }}" autocomplete="off" checked />Transaction #: {{ data.id }}
+      <input type="checkbox" name="transfer_id" value="{{ transfer.get('id') }}" autocomplete="off" checked />Transaction #: {{ transfer.get('id') }}
     </label>
+    {% endfor %}
   </div>
 
   <div class="page-header">

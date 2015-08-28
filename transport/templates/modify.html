@@ -6,7 +6,7 @@
 </div>
 {% endfor %}
 
-<form method="post" name="update_manifest" action="/modconfirm">
+<form method="post" name="update_manifest" action="{{ url_for('confirm_modification') }}">
   <div class="page-header">
     <h2>Modify Current Manifest</h2>
   </div>
@@ -18,9 +18,9 @@
   <div class="collapse" id="currentMaterial">
     <div class="well">
       <div class="btn-group-vertical" data-toggle="buttons">
-	{% for transfer_item in transfer_items %}
+	{% for transfer_item_id in transfer_items %}
 	<label class="btn btn-default active">
-	  <input name="{{ transfer_item.tracseq_id }}" value="{{ transfer_item.id }}" type="checkbox" autocomplete="off" checked />{{ transfer_item.tracseq_id }}
+	  <input name="{{ transfer_item_id }}" value="{{ transfer_item_id }}" type="checkbox" autocomplete="off" checked />{{ transfer_item_id }}
 	</label>
 	{% endfor %}
       </div>
@@ -31,18 +31,18 @@
   <div class="page-header">
     <h3>Add Material to Trip</h3>
   </div>
-  {% if data.get('data') %}
+  {% if newly_available %}
   <button class="btn btn-default" type="button" data-toggle="collapse" data-target="#availableMaterial" aria-expanded="false">
-    Show Available Material: {{ transfer_items | length }}
+    Show Available Material: {{ newly_available | length }}
   </button>
 
 
   <div class="collapse" id="availableMaterial">
     <div class="well">
       <div class="btn-group-vertical" data-toggle="buttons">
-	{% for datum in data.get('data') %}
+	{% for na in newly_available %}
 	<label class="btn btn-default">
-	  <input name="1{{ datum.id }}" value="{{ datum.pool }}" type="checkbox" autocomplete="off" />{{ datum.pool }}
+	  <input name="{{ na.get('poolName') }}" value="{{ na.get('poolDataId') }}" type="checkbox" autocomplete="off" />{{ na.get('poolName') }}
 	</label>
 	{% endfor %}
       </div>
@@ -65,7 +65,7 @@
 <div class="page-header">
   <h3>Danger</h3>
 </div>
-<form method="post" name="cancel_transfer" action="/cancel/{{ transfer_id }}">
+<form method="post" name="cancel_transfer" action="{{ url_for('cancel_transfer', transfer_id=transfer_id) }}">
   <input type="submit" class="btn btn-danger" value="Cancel Transfer" />
 </form>
 

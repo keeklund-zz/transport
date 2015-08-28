@@ -1,7 +1,7 @@
 {% extends "base_layout.html" %}
 {% block body %}
 <h2>Confirm Checkout</h2>
-<form method="post" name="confirm_material" action="/checkout">
+<form method="post" name="confirm_material" action="{{ url_for('checkout') }}">
   <ul>
     {% for datum in data.items() %}
     <li><input name="{{ datum }}" value="{{ datum }}" /></li>
