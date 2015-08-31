@@ -1,6 +1,7 @@
 from datetime import datetime
 from itertools import permutations
 from os.path import abspath, dirname, join
+from uuid import uuid4
 from flask import abort, flash, Flask, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.wtf import Form
@@ -30,17 +31,44 @@ class Users(db.Model):
     onyen = db.Column(db.String(10), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     # separate table with device list
-    device_id = db.Column(db.String(120), unique=True, nullable=False)
     timestamp = db.Column(db.DateTime)
 
-    def __init__(self, name, onyen, email, device_id):
+    def __init__(self, name, onyen, email):
         self.name = name
         self.onyen = onyen
         self.email = email
-        self.device_id = device_id
         self.timestamp = datetime.now()
     
     
+class Devices(db.Model):
+    """
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.String(120), unique=True, nullable=False)
+    user = db.relationship('Users', backref=db.backref('device', lazy='dynamic'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    timestamp = db.Column(db.DateTime)
+
+    def __init__(self, device_id, user):
+        self.device_id = device_id
+        self.user = user 
+        self.timestamp = datetime.now()
+
+        
+class Admin(db.Model):
+    """
+
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    # need to hash this!
+    def __init__(self, name, password):
+        self.name = name
+        self.password = password
+
+        
 # FORMS
 class UserForm(Form):
     name = TextField('name', [validators.Length(max=120)])
@@ -72,21 +100,19 @@ def unauthorized(error):
 
 @app.before_request
 def get_user():
-    # need more logic for add_device (can only be logged in as admin)
     if not request.endpoint in ('add_device', 'login'):
         onyen = request.cookies.get('onyen')
         device_id = request.cookies.get('device_id')
-        if onyen and device_id:
-    #        user = Users.query.filter_by(onyen=onyen).filter_by(device_id=device_id).first()
-# log in user
-            pass
-        # elif admin:
-        #     pass
-        else:
+        if not onyen and not device_id:
             flash("This user's device isn't registered!")
-            flash("Please contact an admin to register your device!")
+            flash("Please contact <a href='mailto:keklund@ad.unc.edu?Subject=Transport%20Registration'>Karl Eklund</a> to register your device!")
             abort(401)
-    
+    elif request.endpoint is 'add_device' and not session.get('logged_in', None) == True:
+        flash("This user's device isn't registered!")
+        flash("Please contact <a href='mailto:keklund@ad.unc.edu?Subject=Transport%20Registration'>Karl Eklund</a> to register your device!")
+        abort(401)
+
+                
 @app.route("/")
 def index():
     # look at tracseq first by onyen to see what is waiting
@@ -100,7 +126,14 @@ def index():
 def login():
     form = LogInForm()
     if form.validate_on_submit():
-        return redirect(url_for('add_device'))
+        if Admin.query.\
+          filter_by(name=form.name.data).\
+          filter_by(password=form.password.data).\
+          first():
+            session['logged_in'] = True
+            return redirect(url_for('add_device'))
+        flash("Sorry, that didn't work")
+        abort(401)
     return render_template("login.html", form=form)
 
 # can only get here if logged in
@@ -108,9 +141,24 @@ def login():
 def add_device():
     form = UserForm()
     if form.validate_on_submit():
+
+        device_id = uuid4().hex
+        user = Users.query.filter_by(name=form.name.data).first()
+
+        if not user:
+            user = Users(form.name.data, form.onyen.data, form.email.data)
+            db.session.add(user)
+            db.session.commit()
+        
+        device = Devices(device_id, user)
+        db.session.add(device)
+        db.session.commit()
+
         response = make_response(redirect(url_for('index')))
-        response.set_cookie('onyen', form.onyen.data)
-        response.set_cookie('device_id', 'test_cookie')
+        today = datetime.today()
+        expires = today.replace(year = today.year + 1)
+        response.set_cookie('onyen', form.onyen.data, expires=expires)
+        response.set_cookie('device_id', device_id, expires=expires)
         return response
     return render_template("add_device.html", form=form)
 
@@ -120,7 +168,7 @@ def pickup():
     req = get('%s/%s' % (TRACSEQ_API_BASE, 'Available'))
     return render_template("pickup.html", data=req.json())
 
-# may want to combin GET and POST 
+# may want to combine GET and POST 
 @app.route("/checkout", methods=['POST'])
 def checkout():
     form_data = request.form.to_dict()
@@ -136,13 +184,13 @@ def checkout():
     # post to tracseq, need error checking
     # this may not be working
     req = post(TRACSEQ_API_BASE, json=payload)
-    flash("%d samples checked out!" % len(form_data))
+    flash("%d sample%s checked out!" % (len(form_data), 's' if len(form_data) > 1 else ''))
     return redirect("/")
 
 @app.route("/dropoff", methods=['GET',])
 def dropoff():
     onyen = request.cookies.get('onyen', None)
-    req = get('%s?carrier=%s&status=InTransit' % (TRACSEQ_API_BASE, onyen))
+    req = get('%s?carrier=%s?status=InTransit' % (TRACSEQ_API_BASE, onyen))
     if req.ok:
         data = req.json()
     else:
@@ -224,6 +272,8 @@ def cancel_transfer(transfer_id):
 
 
     req = get("%s/%s" % (TRACSEQ_API_BASE, transfer_id))
+    print req.ok
+    print req.content
     transfer = req.json()[0]
     transfer['status'] = 'Cancelled'
     transfer['items'] = []
@@ -231,6 +281,8 @@ def cancel_transfer(transfer_id):
     # req = post('%s/%d/status/cancelled' % (TRACSEQ_API_BASE, transfer_id))
 
     req = post("%s/%d" % (TRACSEQ_API_BASE, transfer_id), json=transfer)
+    print req.ok
+    print req.content
     if req.ok:
         flash("Transaction: %d cancelled successfully!" % transfer_id)
     else:
