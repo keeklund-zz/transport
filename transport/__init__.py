@@ -75,14 +75,14 @@ class Admin(db.Model):
     
 # FORMS
 class UserForm(Form):
-    name = TextField('name', [validators.Length(max=120)])
-    onyen = TextField('onyen', [validators.Length(max=10)])
-    email = TextField('email', [validators.Email(), validators.Length(max=120)])
+    name = TextField('name', [validators.Length(max=120), validators.Required()])
+    onyen = TextField('onyen', [validators.Length(max=10), validators.Required()])
+    email = TextField('email', [validators.Email(), validators.Length(max=120), validators.Required()])
     
 
 class LogInForm(Form):
-    name = TextField('name')
-    password = TextField('password')
+    name = TextField('name', [validators.Required(),])
+    password = TextField('password', [validators.Required(),])
 
     
 # VIEWS
@@ -192,22 +192,18 @@ def checkout():
 @app.route("/dropoff", methods=['GET',])
 def dropoff():
     onyen = request.cookies.get('onyen', None)
-    req = get('%s?carrier=%s&amp;Status=InTransit' % (TRACSEQ_API_BASE, onyen))
-    if req.ok:
-        data = req.json()
-    else:
+    req = get('%s?carrier=%s' % (TRACSEQ_API_BASE, onyen))
+    if not req.ok:
         flash("Sorry about this, but there was an error!")
         flash("Please try again, or contact a developer.")
         abort(500)
 
+    data = [d for d in req.json() if d.get('status', None) == 'InTransit']
     if len(data) == 0:
         flash("Please checkout data first!")
         return redirect("/")
-    
-    print data
     return render_template("dropoff.html", data=data)
                            
-
 @app.route("/confirm", methods=['POST'])
 def confirm():
     form_data = request.form.to_dict()
@@ -285,8 +281,7 @@ def cancel_transfer(transfer_id):
 
 
     req = get("%s/%s" % (TRACSEQ_API_BASE, transfer_id))
-    print req.ok
-    print req.content
+
     transfer = req.json()[0]
     transfer['status'] = 'Cancelled'
     transfer['items'] = []
@@ -294,8 +289,7 @@ def cancel_transfer(transfer_id):
     # req = post('%s/%d/status/cancelled' % (TRACSEQ_API_BASE, transfer_id))
 
     req = post("%s/%d" % (TRACSEQ_API_BASE, transfer_id), json=transfer)
-    print req.ok
-    print req.content
+
     if req.ok:
         flash("Transaction: %d cancelled successfully!" % transfer_id)
     else:
