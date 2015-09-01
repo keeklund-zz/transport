@@ -5,8 +5,9 @@ from uuid import uuid4
 from flask import abort, flash, Flask, jsonify, make_response, redirect, render_template, request, session, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.wtf import Form
-from wtforms import TextField, validators
 from requests import get, post
+from werkzeug.security import check_password_hash, generate_password_hash
+from wtforms import TextField, validators
 
 # configurations
 basedir = abspath(dirname(__file__))
@@ -63,12 +64,15 @@ class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    # need to hash this!
+
     def __init__(self, name, password):
         self.name = name
-        self.password = password
-
+        self.password = generate_password_hash(password)
         
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
+
+    
 # FORMS
 class UserForm(Form):
     name = TextField('name', [validators.Length(max=120)])
@@ -126,10 +130,8 @@ def index():
 def login():
     form = LogInForm()
     if form.validate_on_submit():
-        if Admin.query.\
-          filter_by(name=form.name.data).\
-          filter_by(password=form.password.data).\
-          first():
+        admin = Admin.query.filter_by(name=form.name.data).first()
+        if admin.check_password(form.password.data):
             session['logged_in'] = True
             return redirect(url_for('add_device'))
         flash("Sorry, that didn't work")
@@ -190,7 +192,7 @@ def checkout():
 @app.route("/dropoff", methods=['GET',])
 def dropoff():
     onyen = request.cookies.get('onyen', None)
-    req = get('%s?carrier=%s?status=InTransit' % (TRACSEQ_API_BASE, onyen))
+    req = get('%s?carrier=%s&amp;Status=InTransit' % (TRACSEQ_API_BASE, onyen))
     if req.ok:
         data = req.json()
     else:
@@ -208,7 +210,18 @@ def dropoff():
 
 @app.route("/confirm", methods=['POST'])
 def confirm():
-    req = post('%s/%s/status/arrived' % (TRACSEQ_API_BASE, request.form.get('transfer_id', None)))
+    form_data = request.form.to_dict()
+    transfer_id = form_data.pop('transfer_id', None)
+    notes = form_data.pop('notes', None)
+    
+    payload = {
+        'carrier': request.cookies.get('onyen', None),
+        'items': map(int, form_data.values()),
+        'notes': notes,
+        'status': 'Arrived',
+        }
+
+    req = post('%s/%s/status/Arrived' % (TRACSEQ_API_BASE, transfer_id), json=payload)
     if req.ok:
         flash("Transfer: %d's Material has been dropped off!" % int(request.form.get('transfer_id')))
     else:
