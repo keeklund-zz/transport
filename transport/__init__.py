@@ -31,7 +31,6 @@ class Users(db.Model):
     name = db.Column(db.String(120), unique=True)
     onyen = db.Column(db.String(10), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    # separate table with device list
     timestamp = db.Column(db.DateTime)
 
     def __init__(self, name, onyen, email):
@@ -88,7 +87,8 @@ class LogInForm(Form):
 # VIEWS
 @app.errorhandler(401)
 def unauthorized(error):
-    # is this right?
+    flash("This user's device isn't registered!")
+    flash("Please contact <a href='mailto:keklund@ad.unc.edu?Subject=Transport%20Registration'>Karl Eklund</a> to register your device!")
     return render_template('401.html', form=UserForm()), 401 #, {'WWW-Authenticate': 'Basic realm="Login Required"'}
 
 # do we need a 403 - forbidden?
@@ -99,7 +99,8 @@ def page_not_found(error):
 
 @app.errorhandler(500)
 def unauthorized(error):
-    # is this right?
+    flash("Sorry about this, but there was an error!")
+    flash("Please try again, or contact a developer.")
     return render_template('500.html'), 500 #, {'WWW-Authenticate': 'Basic realm="Login Required"'}
 
 @app.before_request
@@ -108,18 +109,13 @@ def get_user():
         onyen = request.cookies.get('onyen')
         device_id = request.cookies.get('device_id')
         if not onyen and not device_id:
-            flash("This user's device isn't registered!")
-            flash("Please contact <a href='mailto:keklund@ad.unc.edu?Subject=Transport%20Registration'>Karl Eklund</a> to register your device!")
             abort(401)
     elif request.endpoint is 'add_device' and not session.get('logged_in', None) == True:
-        flash("This user's device isn't registered!")
-        flash("Please contact <a href='mailto:keklund@ad.unc.edu?Subject=Transport%20Registration'>Karl Eklund</a> to register your device!")
         abort(401)
 
                 
 @app.route("/")
 def index():
-    # look at tracseq first by onyen to see what is waiting
     onyen = request.cookies.get('onyen')
     # error checking around get
     req = get('%s/%s' % (TRACSEQ_API_BASE, onyen))
@@ -134,11 +130,9 @@ def login():
         if admin.check_password(form.password.data):
             session['logged_in'] = True
             return redirect(url_for('add_device'))
-        flash("Sorry, that didn't work")
         abort(401)
     return render_template("login.html", form=form)
 
-# can only get here if logged in
 @app.route("/add_device", methods=['GET', 'POST'])
 def add_device():
     form = UserForm()
@@ -194,8 +188,6 @@ def dropoff():
     onyen = request.cookies.get('onyen', None)
     req = get('%s?carrier=%s' % (TRACSEQ_API_BASE, onyen))
     if not req.ok:
-        flash("Sorry about this, but there was an error!")
-        flash("Please try again, or contact a developer.")
         abort(500)
 
     data = [d for d in req.json() if d.get('status', None) == 'InTransit']
@@ -242,22 +234,22 @@ def modify(transfer_id):
     req = get('%s/%s' % (TRACSEQ_API_BASE, 'Available'))
     available = req.json()
     return render_template("modify.html",
-                           transfer_items=transfer.get('items'),
-                           newly_available=available,
-                           transfer_id=transfer_id)
+            transfer=transfer,
+            newly_available=available)
 
 @app.route("/modconfirm", methods=['POST'])
 def confirm_modification():
     # get data and do stuff
     data = request.form.to_dict()
     transfer_id = data.pop('transfer_id', None)
-
+    notes = data.pop('notes', None)
     # just get the data that we want to use and post
     # error checking 
     req = get('%s/%s' % (TRACSEQ_API_BASE, transfer_id))
     transfer = req.json()[0]
 
-    transfer['items'] = map(int, data.values())
+    transfer['items'] = map(int, data.keys())
+    transfer['notes'] = notes
 
     # error checking
     req = post('%s/%s' % (TRACSEQ_API_BASE, transfer_id), json=transfer)
@@ -270,23 +262,13 @@ def confirm_modification():
 
 @app.route("/cancel/<int:transfer_id>", methods=['POST'])
 def cancel_transfer(transfer_id):
-    # how to confirm?  Confirmation page? text input?
-    #
-    # could simply: confirm it was the user who checked it out, and flash message
-    # will need to put back to tracseq to release these samples again
-    # transfer = Transfers.query.get(transfer_id)
-    # transfer.status = "Cancelled"
-    # transfer.date_stop = datetime.now()
-    # db.session.commit()
 
-
+    # error checking 
     req = get("%s/%s" % (TRACSEQ_API_BASE, transfer_id))
 
     transfer = req.json()[0]
     transfer['status'] = 'Cancelled'
     transfer['items'] = []
-
-    # req = post('%s/%d/status/cancelled' % (TRACSEQ_API_BASE, transfer_id))
 
     req = post("%s/%d" % (TRACSEQ_API_BASE, transfer_id), json=transfer)
 
@@ -298,5 +280,4 @@ def cancel_transfer(transfer_id):
 
 # use config parser to import "global" variables
 # need logging
-# catch all errors and then determine 401, 404, or 500? special error function?
 # handle all req as lists not just the first one
