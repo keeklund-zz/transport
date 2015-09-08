@@ -1,9 +1,5 @@
-@media( (max-width: 768px) {
-	    .btn, .btn-group {
-		width: 100%
-	    }
+@media (max-width: 768px) {
+    .btn,.btn-group {
+	width:100%;
+	}
 }
-body  { display: block; }
-.hide:focus ~ .alert  { display: none; }
-.show:focus ~ .alert  { display: block; }
-

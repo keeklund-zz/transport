@@ -56,9 +56,11 @@
   <div class="page-header">
     <h3>Submission</h3>
   </div>
+  <input type="hidden" name="transfer_id" value="{{ transfer.id }}" />
   <p>
-    <input type="hidden" name="transfer_id" value="{{ transfer.id }}" />
     <input type="submit" class="btn btn-default" value="Update Manifest" />
+  </p>
+  <p>
     <a href="/" class="btn btn-warning">Cancel Modification</a>
   </p>
 </form>
