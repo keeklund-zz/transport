@@ -95,6 +95,7 @@ def unauthorized(error):
 
 @app.errorhandler(404)
 def page_not_found(error):
+    flash("Sorry, this page doesn't exist, or is under development")
     return render_template('404.html'), 404
 
 @app.errorhandler(500)
