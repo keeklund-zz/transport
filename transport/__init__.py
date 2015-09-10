@@ -176,7 +176,11 @@ def checkout():
         'notes': notes,
         'status': 'InTransit',
         }
-       
+
+    if len(payload.get('items')) < 1:
+        flash("Sorry, can't checkout %d items." % len(payload.get('items')))
+        return redirect("/")
+
     # post to tracseq, need error checking
     # this may not be working
     req = post(TRACSEQ_API_BASE, json=payload)
