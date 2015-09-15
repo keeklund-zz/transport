@@ -1,10 +1,15 @@
 {% extends "base_layout.html" %}
 {% block body %}
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning" role="alert">
+  {{ message }}
+</div>
+{% endfor %}
 <div class="page-header">
   <h2>Drop off Material:</h2>
 </div>
 
-<form method="post" name="available_material" action="{{ url_for('confirm') }}">
+<form method="post" name="transit_material" action="{{ url_for('confirm') }}">
   <div class="btn-group-vertical" data-toggle="buttons">
     {% for transfer in data %}
     <label class="btn btn-default active">
@@ -15,12 +20,19 @@
   <div class="page-header">
     <h3>Notes</h3>
   </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" id="standard_drop_off" name="standard_drop_off" checked />Is this a standard drop off?
+    </label>
+  </div>
   <input type="text-area" name="notes" class="form-control" placeholder="Notes on this transfer." />
   <div class="page-header">
     <h3>Submission</h3>
   </div>
   <p>
     <input type="submit" class="btn btn-default" value="Drop Off Material">
+  </p>
+  <p>
     <a href="/" class="btn btn-warning">Cancel Drop Off</a>
   </p>
 </form>

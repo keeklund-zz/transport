@@ -204,9 +204,14 @@ def dropoff():
 @app.route("/confirm", methods=['POST'])
 def confirm():
     form_data = request.form.to_dict()
+    standard_drop_off = form_data.pop('standard_drop_off', None)
     transfer_id = form_data.pop('transfer_id', None)
     notes = form_data.pop('notes', None)
-    
+
+    if not standard_drop_off and not notes:
+        flash("Sorry, but a non-standard drop off requires notes!")
+        return redirect(url_for('dropoff'))
+
     payload = {
         'carrier': request.cookies.get('onyen', None),
         'items': map(int, form_data.values()),

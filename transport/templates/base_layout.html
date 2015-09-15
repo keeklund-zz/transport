@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <!-- handmade stylesheet to override when necessary -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body onunload="">
@@ -31,20 +32,22 @@
 	  <!-- Collect the nav links, forms, and other content for toggling -->
 	  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 	    <ul class="nav navbar-nav">
-              <li class="dropdown">
-		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Pick Up <span class="caret"></span></a>
-		<ul class="dropdown-menu">
-		  <li><a href="/pickup">GSB</a></li>
-		  <li><a href="/futuredev">CCC</a></li>
-		</ul>
-              </li>
-              <li class="dropdown">
-		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Drop Off <span class="caret"></span></a>
-		<ul class="dropdown-menu">
-		  <li><a href="/futuredev">GSB</a></li>
-		  <li><a href="/dropoff">CCC</a></li>
-		</ul>
-              </li>
+	      <li><a href="/pickup">Pick Up</a></li>
+	      <li><a href="/dropoff">Drop Off</a></li>
+              <!-- <li class="dropdown"> -->
+	      <!-- 	<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Pick Up <span class="caret"></span></a> -->
+	      <!-- 	<ul class="dropdown-menu"> -->
+	      <!-- 	  <li><a href="/pickup">GSB</a></li> -->
+	      <!-- 	  <li><a href="/futuredev">CCC</a></li> -->
+	      <!-- 	</ul> -->
+              <!-- </li> -->
+              <!-- <li class="dropdown"> -->
+	      <!-- 	<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Drop Off <span class="caret"></span></a> -->
+	      <!-- 	<ul class="dropdown-menu"> -->
+	      <!-- 	  <li><a href="/futuredev">GSB</a></li> -->
+	      <!-- 	  <li><a href="/dropoff">CCC</a></li> -->
+	      <!-- 	</ul> -->
+              <!-- </li> -->
 	    </ul>
 	    <ul class="nav navbar-nav navbar-right">
               <li class="dropdown">
