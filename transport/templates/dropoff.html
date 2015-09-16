@@ -13,7 +13,11 @@
   <div class="btn-group-vertical" data-toggle="buttons">
     {% for transfer in data %}
     <label class="btn btn-default active">
-      <input type="checkbox" name="transfer_id" value="{{ transfer.get('id') }}" autocomplete="off" checked />Transaction #: {{ transfer.get('id') }}
+      {% if transfer.get('items') | length == 1 %}
+      <input type="checkbox" name="transfer_id" value="{{ transfer.get('id') }}" autocomplete="off" checked />{{ transfer.get('items') | length }} item | Transaction id: {{ transfer.get('id') }}
+      {% else %}
+      <input type="checkbox" name="transfer_id" value="{{ transfer.get('id') }}" autocomplete="off" checked />{{ transfer.get('items') | length }} items | Transaction id: {{ transfer.get('id') }}
+      {% endif %}
     </label>
     {% endfor %}
   </div>
