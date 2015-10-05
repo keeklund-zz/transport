@@ -1,5 +1,10 @@
 {% extends "base_layout.html" %}
 {% block body %}
+{% for message in get_flashed_messages() %}
+<div class="alert alert-warning" role="alert">
+  {{ message }}
+</div>
+{% endfor %}
 <div class="page-header">
   <h2>Material Selection:</h2>
 </div>
@@ -18,6 +23,10 @@
       </div>
     </div>
   </div>
+  <div class="page-header">
+    <h3>Number of Additional Items</h3>
+  </div>
+  <input type="text-area" name="additional_items" class="form-control" type="number" placeholder="Number of additional items." />
   <div class="page-header">
     <h3>Notes</h3>
   </div>
