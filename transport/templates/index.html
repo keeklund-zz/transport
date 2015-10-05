@@ -12,11 +12,7 @@
 </div>
 {% for ct in current_transfers %}
 <p>
-  {% if ct.get('items') | length == 1 %}
-  <a class="btn btn-lg btn-warning" href="/modify/{{ ct.id }}" role="button">{{ ct.get('items') | length  }} item | Transaction id: {{ ct.id }}</a>
-  {% else %}
-  <a class="btn btn-lg btn-warning" href="/modify/{{ ct.id }}" role="button">{{ ct.get('items') | length  }} items | Transaction id: {{ ct.id }}</a>
-  {% endif %}
+  <a class="btn btn-lg btn-warning" href="/modify/{{ ct.id }}" role="button">Transaction id: {{ ct.id }}</a>
 </p>
 {% endfor %}
 {% else %}
