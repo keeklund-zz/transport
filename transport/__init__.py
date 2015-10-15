@@ -169,15 +169,15 @@ def pickup():
 @app.route("/checkout", methods=['POST'])
 def checkout():
     form_data = request.form.to_dict()
-    try:
-        additional_items = int(form_data.pop('additional_items', 0))
-    except ValueError:
-        flash('Additional Items must be a number')
-        return redirect(url_for('pickup'))
+    # try:
+    #     additional_items = int(form_data.pop('additional_items', 0))
+    # except ValueError:
+    #     flash('Additional Items must be a number')
+    #     return redirect(url_for('pickup'))
 
     notes = form_data.pop('notes', None)
 
-    notes = '%s, additional_items:%d' % (notes, additional_items)
+    # notes = '%s, additional_items:%d' % (notes, additional_items)
     
     payload = {
         'carrier': request.cookies.get('onyen', None),
@@ -186,15 +186,14 @@ def checkout():
         'status': 'InTransit',
         }
 
-    if len(payload.get('items')) + additional_items < 1:
+    if len(payload.get('items')) < 1: # + additional_items < 1:
         flash("Sorry, can't checkout %d items." % len(payload.get('items')))
         return redirect("/")
 
     # post to tracseq, need error checking
     # this may not be working
     req = post(TRACSEQ_API_BASE, json=payload)
-    flash("%d sample%s checked out!" % (len(form_data) + additional_items, \
-                                        's' if (len(form_data) + additional_items) > 1 else ''))
+    flash("%d sample%s checked out!" % len(form_data), 's' if len(form_data) > 1 else ''))
     return redirect("/")
 
 @app.route("/dropoff", methods=['GET',])
@@ -261,15 +260,15 @@ def confirm_modification():
     # get data and do stuff
     data = request.form.to_dict()
     transfer_id = data.pop('transfer_id', None)
-    try:
-        additional_items = int(data.pop('additional_items', 0))
-    except ValueError:
-        flash('Additional Items must be a number')
-        return redirect(url_for('modify', transfer_id=transfer_id))
+    # try:
+    #     additional_items = int(data.pop('additional_items', 0))
+    # except ValueError:
+    #     flash('Additional Items must be a number')
+    #     return redirect(url_for('modify', transfer_id=transfer_id))
 
     notes = data.pop('notes', None)
 
-    notes = '%s, additional_items:%d' % (notes, additional_items)
+    # notes = '%s, additional_items:%d' % (notes, additional_items)
     
     # just get the data that we want to use and post
     # error checking 
