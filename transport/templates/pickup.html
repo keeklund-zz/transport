@@ -17,7 +17,7 @@
       <div class="btn-group-vertical" data-toggle="buttons">
 	{% for datum in data %}
 	<label class="btn btn-default active">
-	  <input name="{{ datum.poolName }}" value="{{ datum.poolDataId }}" type="checkbox" autocomplete="off" checked />{{ datum.poolName }}
+	  <input name="{{ datum.poolName }}" value="{{ datum.id }}" type="checkbox" autocomplete="off" checked />{{ datum.poolName }}
 	</label>
 	{% endfor %}
       </div>
