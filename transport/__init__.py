@@ -193,7 +193,7 @@ def checkout():
     # post to tracseq, need error checking
     # this may not be working
     req = post(TRACSEQ_API_BASE, json=payload)
-    flash("%d sample%s checked out!" % len(form_data), 's' if len(form_data) > 1 else ''))
+    flash("%d sample%s checked out!" % (len(form_data), 's' if len(form_data) > 1 else ''))
     return redirect("/")
 
 @app.route("/dropoff", methods=['GET',])
