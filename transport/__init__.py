@@ -13,11 +13,11 @@ from wtforms import TextField, validators
 basedir = abspath(dirname(__file__))
 SQLALCHEMY_DATABASE_URI = ''.join(['sqlite:///', join(basedir, '../../data/transport.db')])
 
-TRACSEQ_API_BASE = 'https://mps-mssql.its.unc.edu/TracSeq/Internal/Transfers'
+TRACSEQ_API_BASE = ''
 
 app = Flask(__name__)
-# do I need a secret key when we have sessions?
-app.secret_key = "weliveinasocietypeople"
+
+app.secret_key = ""
 app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 
 db = SQLAlchemy(app)
